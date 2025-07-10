@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Enrollment</title>
+  <script src="https://login2explore.com/jpdb-commons.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body onload="resetForm()">
+
+  <h2>Student Enrollment Form</h2>
+
+  <form id="studentForm">
+    <label>Roll No:</label>
+    <input type="text" id="rollNo" onblur="checkRollNo()" autofocus><br><br>
+
+    <label>Full Name:</label>
+    <input type="text" id="fullName" disabled><br><br>
+
+    <label>Class:</label>
+    <input type="text" id="class" disabled><br><br>
+
+    <label>Birth Date:</label>
+    <input type="date" id="birthDate" disabled><br><br>
+
+    <label>Address:</label>
+    <input type="text" id="address" disabled><br><br>
+
+    <label>Enrollment Date:</label>
+    <input type="date" id="enrollmentDate" disabled><br><br>
+
+    <button type="button" id="saveBtn" onclick="saveStudent()" disabled>Save</button>
+    <button type="button" id="updateBtn" onclick="updateStudent()" disabled>Update</button>
+    <button type="button" onclick="resetForm()">Reset</button>
+  </form>
+
+  <script>
+    const token = "90935014|-31949210999263457|90959272";
+    const dbName = "School";
+    const relName = "STUDENT-TABLE-NEW";
+    const baseURL = "https://api.login2explore.com:5577";
+
+    function disableForm(disableAll = true) {
+      const ids = ['fullName', 'class', 'birthDate', 'address', 'enrollmentDate'];
+      ids.forEach(id => document.getElementById(id).disabled = disableAll);
+      document.getElementById('saveBtn').disabled = true;
+      document.getElementById('updateBtn').disabled = true;
+    }
+
+    function resetForm() {
+      document.getElementById("studentForm").reset();
+      document.getElementById("rollNo").disabled = false;
+      document.getElementById("rollNo").focus();
+      disableForm(true);
+    }
+
+    function validateFields() {
+      let fields = ['rollNo', 'fullName', 'class', 'birthDate', 'address', 'enrollmentDate'];
+      for (let field of fields) {
+        if (document.getElementById(field).value.trim() === '') {
+          alert("Please fill all fields.");
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function checkRollNo() {
+      const rollNo = document.getElementById("rollNo").value;
+      if (!rollNo) return;
+
+      const getByKeyReq = createGET_BY_KEYRequest(token, dbName, relName, JSON.stringify({ rollNo }));
+      jQuery.ajaxSetup({ async: false });
+      const res = executeCommandAtGivenBaseUrl(getByKeyReq, baseURL, "/api/irl");
+      jQuery.ajaxSetup({ async: true });
+
+      if (res.data) {
+        fillForm(res.data.record);
+        document.getElementById("rollNo").disabled = true;
+        disableForm(false);
+        document.getElementById("saveBtn").disabled = true;
+        document.getElementById("updateBtn").disabled = false;
+      } else {
+        disableForm(false);
+        document.getElementById("saveBtn").disabled = false;
+        document.getElementById("updateBtn").disabled = true;
+        document.getElementById("fullName").focus();
+      }
+    }
+
+    function fillForm(record) {
+      document.getElementById("fullName").value = record.fullName;
+      document.getElementById("class").value = record.class;
+      document.getElementById("birthDate").value = record.birthDate;
+      document.getElementById("address").value = record.address;
+      document.getElementById("enrollmentDate").value = record.enrollmentDate;
+    }
+
+    function saveStudent() {
+      if (!validateFields()) return;
+
+      const data = getFormData();
+      const putReq = createPUTRequest(token, JSON.stringify(data), dbName, relName);
+      jQuery.ajaxSetup({ async: false });
+      executeCommandAtGivenBaseUrl(putReq, baseURL, "/api/iml");
+      jQuery.ajaxSetup({ async: true });
+      alert("Record saved!");
+      resetForm();
+    }
+
+    function updateStudent() {
+      if (!validateFields()) return;
+
+      const data = getFormData();
+      const updateReq = createUPDATERecordRequest(token, JSON.stringify(data), dbName, relName, "rollNo");
+      jQuery.ajaxSetup({ async: false });
+      executeCommandAtGivenBaseUrl(updateReq, baseURL, "/api/iml");
+      jQuery.ajaxSetup({ async: true });
+      alert("Record updated!");
+      resetForm();
+    }
+
+    function getFormData() {
+      return {
+        rollNo: document.getElementById("rollNo").value,
+        fullName: document.getElementById("fullName").value,
+        class: document.getElementById("class").value,
+        birthDate: document.getElementById("birthDate").value,
+        address: document.getElementById("address").value,
+        enrollmentDate: document.getElementById("enrollmentDate").value
+      };
+    }
+  </script>
+
+</body>
+</html>
